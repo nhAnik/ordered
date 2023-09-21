@@ -1,0 +1,233 @@
+package ordered_test
+
+import (
+	"testing"
+
+	"github.com/nhAnik/ordered"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNewMapWithElems(t *testing.T) {
+	type kv = ordered.KeyValue[int, bool]
+	om := ordered.NewMapWithElems[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
+
+	assert.True(t, om.ContainsKey(23))
+
+	om.Put(99, false)
+	assert.Equal(t, 4, om.Len())
+	assert.Equal(t, []int{11, 20, 23, 99}, om.Keys())
+}
+
+func TestGet(t *testing.T) {
+
+	t.Run("empty map get", func(t *testing.T) {
+		om := ordered.NewMap[string, string]()
+
+		_, ok := om.Get("foo")
+		assert.False(t, ok)
+	})
+
+	t.Run("string string map", func(t *testing.T) {
+		om := ordered.NewMap[string, string]()
+		om.Put("foo", "bar")
+
+		val, ok := om.Get("foo")
+		assert.True(t, ok)
+		assert.Equal(t, "bar", val)
+
+		val, ok = om.Get("hello")
+		assert.False(t, ok)
+		assert.Equal(t, "", val)
+	})
+
+	t.Run("int pointer map", func(t *testing.T) {
+		type myStruct struct{ str string }
+		om := ordered.NewMap[int, *myStruct]()
+
+		ms := &myStruct{str: "foo"}
+		om.Put(1, ms)
+		val, ok := om.Get(1)
+		assert.True(t, ok)
+		assert.Equal(t, ms, val)
+
+		val, ok = om.Get(2)
+		assert.False(t, ok)
+		assert.Nil(t, val)
+	})
+
+	t.Run("update value of same key", func(t *testing.T) {
+		om := ordered.NewMap[string, string]()
+		om.Put("foo", "bar")
+
+		val, ok := om.Get("foo")
+		assert.True(t, ok)
+		assert.Equal(t, "bar", val)
+
+		om.Put("foo", "bak")
+		val, ok = om.Get("foo")
+		assert.True(t, ok)
+		assert.Equal(t, "bak", val)
+
+	})
+}
+
+func TestContainsKey(t *testing.T) {
+	om := ordered.NewMap[string, string]()
+
+	assert.False(t, om.ContainsKey("foo"))
+
+	om.Put("foo", "bar")
+	om.Put("abd", "def")
+	om.Put("pqr", "xyz")
+	assert.True(t, om.ContainsKey("foo"))
+	assert.True(t, om.ContainsKey("abd"))
+	assert.True(t, om.ContainsKey("pqr"))
+	assert.False(t, om.ContainsKey("mno"))
+
+	om.Remove("pqr")
+	assert.False(t, om.ContainsKey("pqr"))
+}
+
+func TestRemove(t *testing.T) {
+	om := ordered.NewMap[string, string]()
+
+	om.Put("foo", "bar")
+	om.Put("abd", "def")
+	om.Put("pqr", "xyz")
+	assert.True(t, om.ContainsKey("foo"))
+
+	om.Remove("foo")
+	assert.False(t, om.ContainsKey("foo"))
+}
+
+func TestLen(t *testing.T) {
+	om := ordered.NewMap[string, string]()
+
+	om.Put("foo", "bar")
+	om.Put("abd", "def")
+	assert.Equal(t, 2, om.Len())
+
+	om.Put("abd", "pqr")
+	assert.Equal(t, 2, om.Len())
+
+	om.Remove("abc")
+	assert.Equal(t, 2, om.Len())
+
+	om.Remove("abd")
+	assert.Equal(t, 1, om.Len())
+
+	om.Clear()
+	assert.Equal(t, 0, om.Len())
+}
+
+func TestKeys(t *testing.T) {
+	t.Run("string string map", func(t *testing.T) {
+		om := ordered.NewMap[string, string]()
+
+		om.Put("foo", "bar")
+		om.Put("abd", "def")
+		assert.Equal(t, []string{"foo", "abd"}, om.Keys())
+
+		om.Put("abd", "pqr")
+		assert.Equal(t, []string{"foo", "abd"}, om.Keys())
+
+		om.Put("abc", "abc")
+		assert.Equal(t, []string{"foo", "abd", "abc"}, om.Keys())
+
+		om.Remove("abd")
+		assert.Equal(t, []string{"foo", "abc"}, om.Keys())
+
+		om.Clear()
+		assert.Equal(t, []string{}, om.Keys())
+	})
+
+	t.Run("struct string map", func(t *testing.T) {
+		type point struct{ x, y int }
+		p1 := point{1, 10}
+		p2 := point{2, 20}
+		p3 := point{3, 30}
+		p4 := point{4, 40}
+
+		om := ordered.NewMap[point, string]()
+
+		om.Put(p1, "p1")
+		om.Put(p2, "p2")
+		assert.Equal(t, []point{p1, p2}, om.Keys())
+
+		om.Put(p3, "p3")
+		assert.Equal(t, []point{p1, p2, p3}, om.Keys())
+
+		om.Put(p2, "p22")
+		assert.Equal(t, []point{p1, p2, p3}, om.Keys())
+
+		om.Remove(p1)
+		assert.Equal(t, []point{p2, p3}, om.Keys())
+
+		om.Put(p4, "p4")
+		assert.Equal(t, []point{p2, p3, p4}, om.Keys())
+
+		om.Clear()
+		assert.Equal(t, []point{}, om.Keys())
+	})
+}
+
+func TestValues(t *testing.T) {
+	om := ordered.NewMap[string, string]()
+
+	om.Put("foo", "bar")
+	om.Put("abd", "def")
+	assert.Equal(t, []string{"bar", "def"}, om.Values())
+
+	om.Put("abd", "pqr")
+	assert.Equal(t, []string{"bar", "pqr"}, om.Values())
+
+	om.Put("abc", "abc")
+	assert.Equal(t, []string{"bar", "pqr", "abc"}, om.Values())
+
+	om.Remove("abd")
+	assert.Equal(t, []string{"bar", "abc"}, om.Values())
+
+	om.Clear()
+	assert.Equal(t, []string{}, om.Values())
+}
+
+func TestKeyValues(t *testing.T) {
+	om := ordered.NewMap[string, int]()
+	type kv = ordered.KeyValue[string, int]
+
+	om.Put("foo", 10)
+	om.Put("abd", 20)
+	assert.Equal(t, []kv{{"foo", 10}, {"abd", 20}}, om.KeyValues())
+
+	om.Put("abd", 15)
+	assert.Equal(t, []kv{{"foo", 10}, {"abd", 15}}, om.KeyValues())
+
+	om.Put("abc", 30)
+	assert.Equal(t, []kv{{"foo", 10}, {"abd", 15}, {"abc", 30}}, om.KeyValues())
+
+	om.Remove("abd")
+	assert.Equal(t, []kv{{"foo", 10}, {"abc", 30}}, om.KeyValues())
+
+	om.Clear()
+	assert.Equal(t, []kv{}, om.KeyValues())
+}
+
+func TestIsEmpty(t *testing.T) {
+	om := ordered.NewMap[string, any]()
+
+	assert.True(t, om.IsEmpty())
+
+	om.Put("hello", "world")
+	assert.False(t, om.IsEmpty())
+}
+
+func TestClear(t *testing.T) {
+	om := ordered.NewMap[string, string]()
+
+	om.Put("foo", "bar")
+	om.Put("abd", "def")
+	assert.False(t, om.IsEmpty())
+
+	om.Clear()
+	assert.True(t, om.IsEmpty())
+}
