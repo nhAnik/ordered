@@ -2,6 +2,8 @@ package ordered
 
 import (
 	"container/list"
+	"fmt"
+	"strings"
 )
 
 type valuePair[V any] struct {
@@ -114,4 +116,19 @@ func (o *Map[K, V]) Clear() {
 		next = e.Next()
 		o.items.Remove(e)
 	}
+}
+
+func (o *Map[K, V]) String() string {
+	var sb strings.Builder
+	sb.WriteString("map{")
+	for idx, kv := range o.KeyValues() {
+		if idx > 0 {
+			sb.WriteByte(' ')
+		}
+		sb.WriteString(fmt.Sprint(kv.Key))
+		sb.WriteByte(':')
+		sb.WriteString(fmt.Sprint(kv.Value))
+	}
+	sb.WriteByte('}')
+	return sb.String()
 }

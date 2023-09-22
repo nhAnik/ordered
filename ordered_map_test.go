@@ -231,3 +231,27 @@ func TestClear(t *testing.T) {
 	om.Clear()
 	assert.True(t, om.IsEmpty())
 }
+
+func TestString(t *testing.T) {
+	t.Run("int bool map", func(t *testing.T) {
+		type kv = ordered.KeyValue[int, bool]
+		om := ordered.NewMapWithElems[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
+
+		assert.Equal(t, "map{11:true 20:false 23:true}", om.String())
+
+		om.Remove(20)
+		assert.Equal(t, "map{11:true 23:true}", om.String())
+
+		om.Clear()
+		assert.Equal(t, "map{}", om.String())
+	})
+
+	t.Run("string struct map", func(t *testing.T) {
+		type point struct{ x, y int }
+		om := ordered.NewMap[string, point]()
+		om.Put("p12", point{1, 2})
+		om.Put("p34", point{3, 4})
+
+		assert.Equal(t, "map{p12:{1 2} p34:{3 4}}", om.String())
+	})
+}
