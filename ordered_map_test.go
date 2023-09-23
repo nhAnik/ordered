@@ -1,11 +1,34 @@
 package ordered_test
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/nhAnik/ordered"
 	"github.com/stretchr/testify/assert"
 )
+
+type point struct{ x, y int }
+
+type point3d struct{ X, Y, Z int }
+
+func (p point3d) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d-%d-%d", p.X, p.Y, p.Z)), nil
+}
+
+func (p *point3d) UnmarshalText(text []byte) error {
+	split := strings.Split(string(text), "-")
+	if len(split) != 3 {
+		return errors.New("invalid text for point")
+	}
+	p.X, _ = strconv.Atoi(split[0])
+	p.Y, _ = strconv.Atoi(split[1])
+	p.Z, _ = strconv.Atoi(split[2])
+	return nil
+}
 
 func TestNewMapWithElems(t *testing.T) {
 	type kv = ordered.KeyValue[int, bool]
@@ -142,7 +165,6 @@ func TestKeys(t *testing.T) {
 	})
 
 	t.Run("struct string map", func(t *testing.T) {
-		type point struct{ x, y int }
 		p1 := point{1, 10}
 		p2 := point{2, 20}
 		p3 := point{3, 30}
@@ -247,11 +269,100 @@ func TestString(t *testing.T) {
 	})
 
 	t.Run("string struct map", func(t *testing.T) {
-		type point struct{ x, y int }
 		om := ordered.NewMap[string, point]()
 		om.Put("p12", point{1, 2})
 		om.Put("p34", point{3, 4})
 
 		assert.Equal(t, "map{p12:{1 2} p34:{3 4}}", om.String())
+	})
+}
+
+func TestMarshalJSON(t *testing.T) {
+	t.Run("string any map", func(t *testing.T) {
+		type dummy struct{ Elem string }
+		type kv = ordered.KeyValue[string, any]
+		om := ordered.NewMapWithElems[string, any](
+			kv{"int", 1},
+			kv{"float", 1.5},
+			kv{"bool", true},
+			kv{"string", "foo"},
+			kv{"slice", []int{1, 2, 3}},
+			kv{"struct", dummy{Elem: "bar"}},
+		)
+
+		bytes, err := om.MarshalJSON()
+		assert.NoError(t, err)
+		assert.Equal(t, `{"int":1,"float":1.5,"bool":true,"string":"foo","slice":[1,2,3],"struct":{"Elem":"bar"}}`, string(bytes))
+
+		om.Put("bool", false)
+		om.Remove("slice")
+		bytes, err = om.MarshalJSON()
+		assert.NoError(t, err)
+		assert.Equal(t, `{"int":1,"float":1.5,"bool":false,"string":"foo","struct":{"Elem":"bar"}}`, string(bytes))
+
+		om.Clear()
+		bytes, err = om.MarshalJSON()
+		assert.NoError(t, err)
+		assert.Equal(t, `{}`, string(bytes))
+	})
+
+	t.Run("struct string map", func(t *testing.T) {
+		om := ordered.NewMap[point3d, string]()
+		om.Put(point3d{1, 2, 3}, "p1")
+		om.Put(point3d{4, 5, 6}, "p2")
+
+		bytes, err := om.MarshalJSON()
+		assert.NoError(t, err)
+		assert.Equal(t, `{"1-2-3":"p1","4-5-6":"p2"}`, string(bytes))
+	})
+
+	t.Run("struct string map with no text marshaler", func(t *testing.T) {
+		type dummy struct{ Elem string }
+		om := ordered.NewMap[dummy, string]()
+		om.Put(dummy{"foo"}, "f")
+		om.Put(dummy{"bar"}, "b")
+
+		_, err := om.MarshalJSON()
+		assert.Error(t, err)
+	})
+}
+
+func TestUnmarshalJSON(t *testing.T) {
+	t.Run("string string map", func(t *testing.T) {
+		om := ordered.NewMapWithElems[string, string]()
+		data := []byte(`{"a":"apple","b":"bee","c":"cat","d":"deer"}`)
+
+		err := om.UnmarshalJSON(data)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"a", "b", "c", "d"}, om.Keys())
+		assert.Equal(t, []string{"apple", "bee", "cat", "deer"}, om.Values())
+	})
+
+	t.Run("string slice map", func(t *testing.T) {
+		om := ordered.NewMapWithElems[string, []int]()
+		data := []byte(`{"a":[1,2],"b":[3,4],"c":[5,6,7]}`)
+
+		err := om.UnmarshalJSON(data)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"a", "b", "c"}, om.Keys())
+		assert.Equal(t, [][]int{{1, 2}, {3, 4}, {5, 6, 7}}, om.Values())
+	})
+
+	t.Run("struct string map", func(t *testing.T) {
+		om := ordered.NewMap[point3d, string]()
+		data := []byte(`{"1-2-3":"p1","4-5-6":"p2"}`)
+
+		err := om.UnmarshalJSON(data)
+		assert.NoError(t, err)
+		assert.Equal(t, []point3d{{1, 2, 3}, {4, 5, 6}}, om.Keys())
+		assert.Equal(t, []string{"p1", "p2"}, om.Values())
+	})
+
+	t.Run("unmarshal json with invalid key", func(t *testing.T) {
+		om := ordered.NewMap[point, string]()
+		data := []byte(`{"1-2":"p1","3-4":"p2"}`)
+
+		err := om.UnmarshalJSON(data)
+		assert.Error(t, err)
 	})
 }

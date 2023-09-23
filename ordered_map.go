@@ -1,9 +1,15 @@
 package ordered
 
 import (
+	"bytes"
 	"container/list"
+	"encoding"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/buger/jsonparser"
 )
 
 type valuePair[V any] struct {
@@ -131,4 +137,61 @@ func (o *Map[K, V]) String() string {
 	}
 	sb.WriteByte('}')
 	return sb.String()
+}
+
+func (o *Map[K, V]) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte('{')
+	for idx, kv := range o.KeyValues() {
+		if idx > 0 {
+			buf.WriteByte(',')
+		}
+		// key type must either be a string, an integer type, or implement encoding.TextMarshaler
+		switch any(kv.Key).(type) {
+		case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, encoding.TextMarshaler:
+			keyBytes, err := json.Marshal(kv.Key)
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(keyBytes)
+		default:
+			return nil, errors.New("invalid key type")
+		}
+
+		buf.WriteByte(':')
+		valBytes, err := json.Marshal(kv.Value)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(valBytes)
+	}
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+func (o *Map[K, V]) UnmarshalJSON(b []byte) error {
+	return jsonparser.ObjectEach(b, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		var k K
+		// key type must either be a string, an integer type, or implement encoding.TextMarshaler
+		switch any(k).(type) {
+		case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, encoding.TextMarshaler:
+			if err := json.Unmarshal([]byte(fmt.Sprintf("\"%s\"", string(key))), &k); err != nil {
+				return err
+			}
+		default:
+			return errors.New("invalid key type")
+		}
+		var v V
+		var valBytes []byte
+		if dataType == jsonparser.String {
+			valBytes = []byte(fmt.Sprintf("\"%s\"", string(value)))
+		} else {
+			valBytes = value
+		}
+		if err := json.Unmarshal(valBytes, &v); err != nil {
+			return err
+		}
+		o.Put(k, v)
+		return nil
+	})
 }
