@@ -1,6 +1,7 @@
 package ordered_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -325,6 +326,40 @@ func TestMarshalJSON(t *testing.T) {
 		_, err := om.MarshalJSON()
 		assert.Error(t, err)
 	})
+
+	t.Run("pointer to map in struct", func(t *testing.T) {
+		type kv = ordered.KeyValue[string, int]
+		data := struct {
+			Name string
+			Val  int
+			Mp   *ordered.Map[string, int]
+		}{
+			Name: "xyz",
+			Val:  10,
+			Mp:   ordered.NewMapWithElems[string, int](kv{"foo", 1}, kv{"bar", 2}),
+		}
+
+		bytes, err := json.Marshal(data)
+		assert.NoError(t, err)
+		assert.Equal(t, `{"Name":"xyz","Val":10,"Mp":{"foo":1,"bar":2}}`, string(bytes))
+	})
+
+	t.Run("map in struct", func(t *testing.T) {
+		type kv = ordered.KeyValue[string, int]
+		data := struct {
+			Name string
+			Val  int
+			Mp   ordered.Map[string, int]
+		}{
+			Name: "xyz",
+			Val:  10,
+			Mp:   *ordered.NewMapWithElems[string, int](kv{"foo", 1}, kv{"bar", 2}),
+		}
+
+		bytes, err := json.Marshal(data)
+		assert.NoError(t, err)
+		assert.Equal(t, `{"Name":"xyz","Val":10,"Mp":{"foo":1,"bar":2}}`, string(bytes))
+	})
 }
 
 func TestUnmarshalJSON(t *testing.T) {
@@ -364,5 +399,20 @@ func TestUnmarshalJSON(t *testing.T) {
 
 		err := om.UnmarshalJSON(data)
 		assert.Error(t, err)
+	})
+
+	t.Run("map in struct", func(t *testing.T) {
+		type kv = ordered.KeyValue[string, int]
+		type st struct {
+			Name string
+			Val  int
+			Mp   *ordered.Map[string, int]
+		}
+		s := &st{}
+		data := []byte(`{"name":"xyz","val":10,"mp":{"foo":1,"bar":2}}`)
+
+		err := json.Unmarshal(data, s)
+		assert.NoError(t, err)
+		assert.Equal(t, []kv{{"foo", 1}, {"bar", 2}}, s.Mp.KeyValues())
 	})
 }

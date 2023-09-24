@@ -139,7 +139,7 @@ func (o *Map[K, V]) String() string {
 	return sb.String()
 }
 
-func (o *Map[K, V]) MarshalJSON() ([]byte, error) {
+func (o Map[K, V]) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
 	for idx, kv := range o.KeyValues() {
@@ -170,6 +170,10 @@ func (o *Map[K, V]) MarshalJSON() ([]byte, error) {
 }
 
 func (o *Map[K, V]) UnmarshalJSON(b []byte) error {
+	if o.items == nil || o.mp == nil {
+		o.mp = make(map[K]*valuePair[V])
+		o.items = list.New()
+	}
 	return jsonparser.ObjectEach(b, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		var k K
 		// key type must either be a string, an integer type, or implement encoding.TextMarshaler
