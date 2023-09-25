@@ -38,8 +38,12 @@ func (s *Set[T]) Contains(elem T) bool {
 	return s.mp.ContainsKey(elem)
 }
 
-func (s *Set[T]) Remove(elem T) {
+func (s *Set[T]) Remove(elem T) bool {
+	if !s.Contains(elem) {
+		return false
+	}
 	s.mp.Remove(elem)
+	return true
 }
 
 func (s *Set[T]) Len() int {

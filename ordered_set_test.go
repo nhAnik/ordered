@@ -38,8 +38,13 @@ func TestSetRemove(t *testing.T) {
 
 	assert.Equal(t, []string{"foo", "bar", "baz"}, s.Elements())
 
-	s.Remove("bar")
+	removed := s.Remove("bar")
 	assert.Equal(t, []string{"foo", "baz"}, s.Elements())
+	assert.True(t, removed)
+
+	removed = s.Remove("abc")
+	assert.Equal(t, []string{"foo", "baz"}, s.Elements())
+	assert.False(t, removed)
 }
 
 func TestSetLen(t *testing.T) {

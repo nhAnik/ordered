@@ -113,15 +113,39 @@ func TestContainsKey(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	om := ordered.NewMap[string, string]()
+	t.Run("string string map", func(t *testing.T) {
+		om := ordered.NewMap[string, string]()
 
-	om.Put("foo", "bar")
-	om.Put("abd", "def")
-	om.Put("pqr", "xyz")
-	assert.True(t, om.ContainsKey("foo"))
+		om.Put("foo", "bar")
+		om.Put("abd", "def")
+		om.Put("pqr", "xyz")
+		assert.True(t, om.ContainsKey("foo"))
 
-	om.Remove("foo")
-	assert.False(t, om.ContainsKey("foo"))
+		remValue := om.Remove("foo")
+		assert.False(t, om.ContainsKey("foo"))
+		assert.Equal(t, "bar", remValue)
+
+		remValue = om.Remove("abc")
+		assert.False(t, om.ContainsKey("abc"))
+		assert.Equal(t, "", remValue)
+	})
+
+	t.Run("string slice map", func(t *testing.T) {
+		om := ordered.NewMap[string, []int]()
+
+		om.Put("foo", []int{1, 2})
+		om.Put("abd", []int{3, 4})
+		om.Put("pqr", []int{5, 6})
+		assert.True(t, om.ContainsKey("foo"))
+
+		remValue := om.Remove("foo")
+		assert.False(t, om.ContainsKey("foo"))
+		assert.Equal(t, []int{1, 2}, remValue)
+
+		remValue = om.Remove("abc")
+		assert.False(t, om.ContainsKey("abc"))
+		assert.Equal(t, []int(nil), remValue)
+	})
 }
 
 func TestLen(t *testing.T) {

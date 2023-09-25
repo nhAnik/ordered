@@ -65,11 +65,15 @@ func (o *Map[K, V]) ContainsKey(key K) bool {
 	return ok
 }
 
-func (o *Map[K, V]) Remove(key K) {
+func (o *Map[K, V]) Remove(key K) V {
 	if vp, ok := o.mp[key]; ok {
+		value := vp.value
 		o.items.Remove(vp.elem)
 		delete(o.mp, key)
+		return value
 	}
+	var dummy V
+	return dummy
 }
 
 func (o *Map[K, V]) Len() int {
