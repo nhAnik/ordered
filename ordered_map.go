@@ -17,16 +17,23 @@ type valuePair[V any] struct {
 	value V
 }
 
+// KeyValue represents a map elements as a key-value pair.
 type KeyValue[K comparable, V any] struct {
 	Key   K
 	Value V
 }
 
+// Map represents an ordered map which is an extension of hashmap.
+// Unlike hashmap, the ordered map maintains the insertion order
+// i.e. the order in which the keys and their mapped values are
+// inserted in the map. The insertion order is not changed if a key
+// which already exists in the map is re-inserted.
 type Map[K comparable, V any] struct {
 	mp    map[K]*valuePair[V]
 	items *list.List
 }
 
+// NewMap initializes an ordered map.
 func NewMap[K comparable, V any]() *Map[K, V] {
 	return &Map[K, V]{
 		mp:    make(map[K]*valuePair[V], 0),
@@ -34,6 +41,8 @@ func NewMap[K comparable, V any]() *Map[K, V] {
 	}
 }
 
+// NewMapWithElems initializes an ordered map and puts the given key-value pair
+// in the map.
 func NewMapWithElems[K comparable, V any](kvs ...KeyValue[K, V]) *Map[K, V] {
 	om := NewMap[K, V]()
 	for _, kv := range kvs {
@@ -42,6 +51,8 @@ func NewMapWithElems[K comparable, V any](kvs ...KeyValue[K, V]) *Map[K, V] {
 	return om
 }
 
+// Put inserts a key and its mapped value in the map. If the key already exists, the
+// mapped value is replaced by the new value.
 func (o *Map[K, V]) Put(key K, value V) {
 	if _, ok := o.mp[key]; !ok {
 		e := o.items.PushBack(key)
@@ -51,6 +62,8 @@ func (o *Map[K, V]) Put(key K, value V) {
 	}
 }
 
+// Get returns the mapped value for the given key and a bool indicating
+// whether the key exists or not.
 func (o *Map[K, V]) Get(key K) (V, bool) {
 	val, ok := o.mp[key]
 	if ok {
@@ -60,11 +73,14 @@ func (o *Map[K, V]) Get(key K) (V, bool) {
 	return dummy, false
 }
 
+// ContainsKey checks if the map contains a mapping for the given key.
 func (o *Map[K, V]) ContainsKey(key K) bool {
 	_, ok := o.mp[key]
 	return ok
 }
 
+// Remove removes the key with its mapped value from the map and returns
+// the value if the key exists.
 func (o *Map[K, V]) Remove(key K) V {
 	if vp, ok := o.mp[key]; ok {
 		value := vp.value
@@ -76,10 +92,13 @@ func (o *Map[K, V]) Remove(key K) V {
 	return dummy
 }
 
+// Len returns the number of elements in the map.
 func (o *Map[K, V]) Len() int {
 	return o.items.Len()
 }
 
+// Keys returns all the keys from the map according to their insertion order.
+// The first element of the slice is the oldest key in the map.
 func (o *Map[K, V]) Keys() []K {
 	keys := make([]K, o.items.Len())
 	idx := 0
@@ -90,6 +109,8 @@ func (o *Map[K, V]) Keys() []K {
 	return keys
 }
 
+// Values returns all the values from the map according to their insertion order.
+// The first element of the slice is the oldest value in the map.
 func (o *Map[K, V]) Values() []V {
 	values := make([]V, o.items.Len())
 	idx := 0
@@ -101,6 +122,9 @@ func (o *Map[K, V]) Values() []V {
 	return values
 }
 
+// KeyValues returns all the keys and values from the map according to their
+// insertion order. The first element of the slice is the oldest key and value
+// in the map.
 func (o *Map[K, V]) KeyValues() []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], o.items.Len())
 	idx := 0
@@ -113,10 +137,12 @@ func (o *Map[K, V]) KeyValues() []KeyValue[K, V] {
 	return kvs
 }
 
+// IsEmpty checks whether the map is empty or not.
 func (o *Map[K, V]) IsEmpty() bool {
 	return len(o.mp) == 0
 }
 
+// Clear removes all the keys and their mapped values from the map.
 func (o *Map[K, V]) Clear() {
 	for k := range o.mp {
 		delete(o.mp, k)
@@ -128,6 +154,7 @@ func (o *Map[K, V]) Clear() {
 	}
 }
 
+// String returns the string representation of the map.
 func (o *Map[K, V]) String() string {
 	var sb strings.Builder
 	sb.WriteString("map{")
@@ -143,6 +170,7 @@ func (o *Map[K, V]) String() string {
 	return sb.String()
 }
 
+// MarshalJSON implements json.Marshaler interface.
 func (o Map[K, V]) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
@@ -173,6 +201,7 @@ func (o Map[K, V]) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface.
 func (o *Map[K, V]) UnmarshalJSON(b []byte) error {
 	if o.items == nil || o.mp == nil {
 		o.mp = make(map[K]*valuePair[V])

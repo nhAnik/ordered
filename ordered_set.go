@@ -12,16 +12,22 @@ import (
 
 var dummy = struct{}{}
 
+// Set represents an ordered set which is a special hashset keeping the
+// insertion order intact. The insertion order is not changed if a element
+// which already exists in the set is re-inserted.
 type Set[T comparable] struct {
 	mp *Map[T, struct{}]
 }
 
+// NewSet initializes an ordered set.
 func NewSet[T comparable]() *Set[T] {
 	return &Set[T]{
 		mp: NewMap[T, struct{}](),
 	}
 }
 
+// NewSetWithElems initializes an ordered set and adds the elements
+// in the set.
 func NewSetWithElems[T comparable](elems ...T) *Set[T] {
 	s := NewSet[T]()
 	for _, elem := range elems {
@@ -30,14 +36,19 @@ func NewSetWithElems[T comparable](elems ...T) *Set[T] {
 	return s
 }
 
+// Add inserts a new element in the set.
 func (s *Set[T]) Add(elem T) {
 	s.mp.Put(elem, dummy)
 }
 
+// Contains checks if the set contains the given element or not.
 func (s *Set[T]) Contains(elem T) bool {
 	return s.mp.ContainsKey(elem)
 }
 
+// Remove removes the given element from the set if the elements is
+// already there in the set. The returned boolean value indicates
+// whether the element is removed or not.
 func (s *Set[T]) Remove(elem T) bool {
 	if !s.Contains(elem) {
 		return false
@@ -46,22 +57,29 @@ func (s *Set[T]) Remove(elem T) bool {
 	return true
 }
 
+// Len returns the number of elements in the set.
 func (s *Set[T]) Len() int {
 	return s.mp.Len()
 }
 
+// Elements returns all the elements of the set according to their
+// insertion order. The first element of the slice is the oldest
+// element in the set.
 func (s *Set[T]) Elements() []T {
 	return s.mp.Keys()
 }
 
+// IsEmpty checks whether the set is empty or not.
 func (s *Set[T]) IsEmpty() bool {
 	return s.mp.IsEmpty()
 }
 
+// Clear removes all the elements from the set.
 func (s *Set[T]) Clear() {
 	s.mp.Clear()
 }
 
+// String returns the string representation of the set.
 func (s *Set[T]) String() string {
 	var sb strings.Builder
 	sb.WriteString("set{")
@@ -75,6 +93,7 @@ func (s *Set[T]) String() string {
 	return sb.String()
 }
 
+// MarshalJSON implements json.Marshaler interface.
 func (s Set[T]) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('[')
@@ -92,6 +111,7 @@ func (s Set[T]) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface.
 func (s *Set[T]) UnmarshalJSON(b []byte) error {
 	if s.mp == nil {
 		s.mp = NewMap[T, struct{}]()
