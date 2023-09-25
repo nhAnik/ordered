@@ -1,6 +1,6 @@
 module github.com/nhAnik/ordered
 
-go 1.21.0
+go 1.18
 
 require (
 	github.com/buger/jsonparser v1.1.1
