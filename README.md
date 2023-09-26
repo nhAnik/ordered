@@ -23,7 +23,7 @@ The go version should be >=1.18
 go get github.com/nhAnik/ordered
 ```
 
-### Example:
+### Example
 **Example of ordered map:**
 ```go
 package main
@@ -38,7 +38,7 @@ import (
 type point struct{ X, Y int }
 
 func main() {
-	// Create a new ordered map using generics
+	// Create a new generic ordered map
 	om := ordered.NewMap[string, point]()
 
 	// Put key-value pair in the map
@@ -97,14 +97,15 @@ import (
 )
 
 func main() {
-	// Create a new ordered set using generics
+	// Create a new generic ordered set
 	s := ordered.NewSet[string]()
 
 	// Add new values in the set
 	s.Add("C++")
 	s.Add("Java")
 	s.Add("Go")
-	// Duplicate will not be added
+	// Duplicate will not be added and will not
+	// affect insertion order.
 	s.Add("Java")
 
 	// Check if an element exists
@@ -141,4 +142,8 @@ func main() {
 }
 ```
 ### Documentation
-Documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/nhAnik/ordered).
+Documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/nhAnik/ordered#section-documentation).
+
+## License
+
+[MIT](LICENSE)
