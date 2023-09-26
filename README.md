@@ -1,4 +1,4 @@
-# ordered ![Build](https://github.com/nhAnik/ordered/actions/workflows/build.yaml/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/nhAnik/ordered/badge.svg)](https://coveralls.io/github/nhAnik/ordered)
+# ordered [![Go Reference](https://pkg.go.dev/badge/github.com/nhAnik/ordered.svg)](https://pkg.go.dev/github.com/nhAnik/ordered) ![Build](https://github.com/nhAnik/ordered/actions/workflows/build.yaml/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/nhAnik/ordered/badge.svg)](https://coveralls.io/github/nhAnik/ordered)
 Implementation of generic ordered map and set. An ordered map is a special
 hashmap which maintains the insertion order of the key-vale pair. The ordered
 set is a wrapper around the ordered map which keeps the unique elements
