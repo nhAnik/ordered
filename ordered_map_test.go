@@ -31,9 +31,9 @@ func (p *point3d) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func TestNewMapWithElems(t *testing.T) {
+func TestNewMapWithKVs(t *testing.T) {
 	type kv = ordered.KeyValue[int, bool]
-	om := ordered.NewMapWithElems[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
+	om := ordered.NewMapWithKVs[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
 
 	assert.True(t, om.ContainsKey(23))
 
@@ -292,7 +292,7 @@ func TestClear(t *testing.T) {
 func TestString(t *testing.T) {
 	t.Run("int bool map", func(t *testing.T) {
 		type kv = ordered.KeyValue[int, bool]
-		om := ordered.NewMapWithElems[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
+		om := ordered.NewMapWithKVs[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
 
 		assert.Equal(t, "map{11:true 20:false 23:true}", om.String())
 
@@ -316,7 +316,7 @@ func TestMarshalJSON(t *testing.T) {
 	t.Run("string any map", func(t *testing.T) {
 		type dummy struct{ Elem string }
 		type kv = ordered.KeyValue[string, any]
-		om := ordered.NewMapWithElems[string, any](
+		om := ordered.NewMapWithKVs[string, any](
 			kv{"int", 1},
 			kv{"float", 1.5},
 			kv{"bool", true},
@@ -370,7 +370,7 @@ func TestMarshalJSON(t *testing.T) {
 		}{
 			Name: "xyz",
 			Val:  10,
-			Mp:   ordered.NewMapWithElems[string, int](kv{"foo", 1}, kv{"bar", 2}),
+			Mp:   ordered.NewMapWithKVs[string, int](kv{"foo", 1}, kv{"bar", 2}),
 		}
 
 		bytes, err := json.Marshal(data)
@@ -387,7 +387,7 @@ func TestMarshalJSON(t *testing.T) {
 		}{
 			Name: "xyz",
 			Val:  10,
-			Mp:   *ordered.NewMapWithElems[string, int](kv{"foo", 1}, kv{"bar", 2}),
+			Mp:   *ordered.NewMapWithKVs[string, int](kv{"foo", 1}, kv{"bar", 2}),
 		}
 
 		bytes, err := json.Marshal(data)
@@ -398,7 +398,7 @@ func TestMarshalJSON(t *testing.T) {
 
 func TestUnmarshalJSON(t *testing.T) {
 	t.Run("string string map", func(t *testing.T) {
-		om := ordered.NewMapWithElems[string, string]()
+		om := ordered.NewMapWithKVs[string, string]()
 		data := []byte(`{"a":"apple","b":"bee","c":"cat","d":"deer"}`)
 
 		err := om.UnmarshalJSON(data)
@@ -408,7 +408,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	})
 
 	t.Run("string slice map", func(t *testing.T) {
-		om := ordered.NewMapWithElems[string, []int]()
+		om := ordered.NewMapWithKVs[string, []int]()
 		data := []byte(`{"a":[1,2],"b":[3,4],"c":[5,6,7]}`)
 
 		err := om.UnmarshalJSON(data)

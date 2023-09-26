@@ -41,9 +41,9 @@ func NewMap[K comparable, V any]() *Map[K, V] {
 	}
 }
 
-// NewMapWithElems initializes an ordered map and puts the given key-value pair
+// NewMapWithKVs initializes an ordered map and inserts the given key-value pair
 // in the map.
-func NewMapWithElems[K comparable, V any](kvs ...KeyValue[K, V]) *Map[K, V] {
+func NewMapWithKVs[K comparable, V any](kvs ...KeyValue[K, V]) *Map[K, V] {
 	om := NewMap[K, V]()
 	for _, kv := range kvs {
 		om.Put(kv.Key, kv.Value)
