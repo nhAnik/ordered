@@ -91,8 +91,18 @@ func TestGet(t *testing.T) {
 		val, ok = om.Get("foo")
 		assert.True(t, ok)
 		assert.Equal(t, "bak", val)
-
 	})
+}
+
+func TestGetOrDefault(t *testing.T) {
+	om := ordered.NewMap[string, string]()
+	om.Put("foo", "bar")
+
+	val := om.GetOrDefault("foo", "default")
+	assert.Equal(t, "bar", val)
+
+	val = om.GetOrDefault("bar", "default")
+	assert.Equal(t, "default", val)
 }
 
 func TestContainsKey(t *testing.T) {

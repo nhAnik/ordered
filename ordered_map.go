@@ -65,12 +65,20 @@ func (o *Map[K, V]) Put(key K, value V) {
 // Get returns the mapped value for the given key and a bool indicating
 // whether the key exists or not.
 func (o *Map[K, V]) Get(key K) (V, bool) {
-	val, ok := o.mp[key]
-	if ok {
+	if val, ok := o.mp[key]; ok {
 		return val.value, true
 	}
 	var dummy V
 	return dummy, false
+}
+
+// GetOrDefault returns the mapped value for the given key if it exists.
+// Otherwise, it returns the default value.
+func (o *Map[K, V]) GetOrDefault(key K, defaultValue V) V {
+	if val, ok := o.mp[key]; ok {
+		return val.value
+	}
+	return defaultValue
 }
 
 // ContainsKey checks if the map contains a mapping for the given key.
