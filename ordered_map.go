@@ -36,7 +36,7 @@ type Map[K comparable, V any] struct {
 // NewMap initializes an ordered map.
 func NewMap[K comparable, V any]() *Map[K, V] {
 	return &Map[K, V]{
-		mp:    make(map[K]*valuePair[V], 0),
+		mp:    make(map[K]*valuePair[V]),
 		items: list.New(),
 	}
 }
@@ -44,7 +44,10 @@ func NewMap[K comparable, V any]() *Map[K, V] {
 // NewMapWithKVs initializes an ordered map and inserts the given key-value pair
 // in the map.
 func NewMapWithKVs[K comparable, V any](kvs ...KeyValue[K, V]) *Map[K, V] {
-	om := NewMap[K, V]()
+	om := &Map[K, V]{
+		mp:    make(map[K]*valuePair[V], len(kvs)),
+		items: list.New(),
+	}
 	for _, kv := range kvs {
 		om.Put(kv.Key, kv.Value)
 	}
