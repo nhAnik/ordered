@@ -190,6 +190,15 @@ func TestSetMarshalJSON(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, `{"Name":"xyz","Val":10,"Tags":["foo","bar","baz"]}`, string(bytes))
 	})
+
+	t.Run("element marshalling error", func(t *testing.T) {
+		// complex type is not supported for json marshalling
+		s := ordered.NewSet[complex128]()
+		s.Add(2 + 3i)
+
+		_, err := json.Marshal(s)
+		assert.Error(t, err)
+	})
 }
 
 func TestSetUnmarshalJSON(t *testing.T) {

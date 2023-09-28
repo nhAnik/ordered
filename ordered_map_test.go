@@ -31,6 +31,16 @@ func (p *point3d) UnmarshalText(text []byte) error {
 	return nil
 }
 
+type errKey struct{}
+
+func (errKey) MarshalText() ([]byte, error) {
+	return nil, errors.New("error during marshalling")
+}
+
+func (*errKey) UnmarshalText(text []byte) error {
+	return errors.New("error during unmarshalling")
+}
+
 func TestNewMapWithKVs(t *testing.T) {
 	type kv = ordered.KeyValue[int, bool]
 	om := ordered.NewMapWithKVs[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
@@ -394,6 +404,24 @@ func TestMarshalJSON(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, `{"Name":"xyz","Val":10,"Mp":{"foo":1,"bar":2}}`, string(bytes))
 	})
+
+	t.Run("key marshalling error", func(t *testing.T) {
+		// MarshalText for errKey always returns error
+		om := ordered.NewMap[errKey, string]()
+		om.Put(errKey{}, "abc")
+
+		_, err := json.Marshal(om)
+		assert.Error(t, err)
+	})
+
+	t.Run("value marshalling error", func(t *testing.T) {
+		// complex type is not supported for json marshalling
+		om := ordered.NewMap[string, complex128]()
+		om.Put("2+3i", complex(2, 3))
+
+		_, err := json.Marshal(om)
+		assert.Error(t, err)
+	})
 }
 
 func TestUnmarshalJSON(t *testing.T) {
@@ -448,5 +476,23 @@ func TestUnmarshalJSON(t *testing.T) {
 		err := json.Unmarshal(data, s)
 		assert.NoError(t, err)
 		assert.Equal(t, []kv{{"foo", 1}, {"bar", 2}}, s.Mp.KeyValues())
+	})
+
+	t.Run("key unmarshalling error", func(t *testing.T) {
+		// UnmarshalText for errKey always returns error
+		om := ordered.NewMap[errKey, string]()
+		data := []byte(`{"abc":"abc"`)
+
+		err := om.UnmarshalJSON(data)
+		assert.Error(t, err)
+	})
+
+	t.Run("value unmarshalling error", func(t *testing.T) {
+		// complex type is not supported for json unmarshalling
+		om := ordered.NewMap[string, complex128]()
+		data := []byte(`{"abc":"2+3i"`)
+
+		err := om.UnmarshalJSON(data)
+		assert.Error(t, err)
 	})
 }
