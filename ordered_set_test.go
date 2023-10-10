@@ -8,6 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewSetWithCapacity(t *testing.T) {
+	s := ordered.NewSetWithCapacity[string](3)
+
+	assert.True(t, s.IsEmpty())
+
+	s.Add("abc")
+	s.Add("def")
+	s.Add("abc")
+	s.Add("pqr")
+	assert.Equal(t, 3, s.Len())
+	assert.Equal(t, []string{"abc", "def", "pqr"}, s.Elements())
+}
+
 func TestNewSetWithElems(t *testing.T) {
 	s := ordered.NewSetWithElems[string]("foo", "bar", "foo", "baz")
 

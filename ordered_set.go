@@ -26,10 +26,18 @@ func NewSet[T comparable]() *Set[T] {
 	}
 }
 
+// NewSetWithCapacity initializes an ordered set with the given
+// initial capacity..
+func NewSetWithCapacity[T comparable](capacity int) *Set[T] {
+	return &Set[T]{
+		mp: NewMapWithCapacity[T, struct{}](capacity),
+	}
+}
+
 // NewSetWithElems initializes an ordered set and adds the elements
 // in the set.
 func NewSetWithElems[T comparable](elems ...T) *Set[T] {
-	s := NewSet[T]()
+	s := NewSetWithCapacity[T](len(elems))
 	for _, elem := range elems {
 		s.Add(elem)
 	}

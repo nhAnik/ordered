@@ -41,13 +41,19 @@ func NewMap[K comparable, V any]() *Map[K, V] {
 	}
 }
 
+// NewMapWithCapacity initializes an ordered map with the given
+// initial capacity.
+func NewMapWithCapacity[K comparable, V any](capacity int) *Map[K, V] {
+	return &Map[K, V]{
+		mp:    make(map[K]*valuePair[V], capacity),
+		items: list.New(),
+	}
+}
+
 // NewMapWithKVs initializes an ordered map and inserts the given key-value pair
 // in the map.
 func NewMapWithKVs[K comparable, V any](kvs ...KeyValue[K, V]) *Map[K, V] {
-	om := &Map[K, V]{
-		mp:    make(map[K]*valuePair[V], len(kvs)),
-		items: list.New(),
-	}
+	om := NewMapWithCapacity[K, V](len(kvs))
 	for _, kv := range kvs {
 		om.Put(kv.Key, kv.Value)
 	}

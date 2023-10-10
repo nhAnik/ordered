@@ -41,6 +41,19 @@ func (*errKey) UnmarshalText(text []byte) error {
 	return errors.New("error during unmarshalling")
 }
 
+func TestNewMapWithCapacity(t *testing.T) {
+	om := ordered.NewMapWithCapacity[int, string](5)
+
+	assert.True(t, om.IsEmpty())
+
+	om.Put(1, "foo")
+	om.Put(2, "bar")
+	om.Put(3, "baz")
+	assert.Equal(t, 3, om.Len())
+	assert.Equal(t, []int{1, 2, 3}, om.Keys())
+	assert.Equal(t, []string{"foo", "bar", "baz"}, om.Values())
+}
+
 func TestNewMapWithKVs(t *testing.T) {
 	type kv = ordered.KeyValue[int, bool]
 	om := ordered.NewMapWithKVs[int, bool](kv{11, true}, kv{20, false}, kv{23, true})
