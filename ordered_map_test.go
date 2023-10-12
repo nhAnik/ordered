@@ -1,6 +1,8 @@
 package ordered_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -506,6 +508,103 @@ func TestUnmarshalJSON(t *testing.T) {
 		data := []byte(`{"abc":"2+3i"`)
 
 		err := om.UnmarshalJSON(data)
+		assert.Error(t, err)
+	})
+}
+
+type Vector struct {
+	x, y, z int
+}
+
+func (v Vector) MarshalBinary() ([]byte, error) {
+	var b bytes.Buffer
+	fmt.Fprintln(&b, v.x, v.y, v.z)
+	return b.Bytes(), nil
+}
+
+func (v *Vector) UnmarshalBinary(data []byte) error {
+	b := bytes.NewBuffer(data)
+	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
+	return err
+}
+
+func TestGobEncodeDecode(t *testing.T) {
+	t.Run("string int map", func(t *testing.T) {
+		type kv = ordered.KeyValue[string, int]
+		encMp := ordered.NewMapWithKVs[string, int](kv{"abc", 1}, kv{"def", 2})
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.NoError(t, err)
+
+		decMp := ordered.NewMap[string, int]()
+		err = gob.NewDecoder(&buf).Decode(decMp)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"abc", "def"}, decMp.Keys())
+		assert.Equal(t, []int{1, 2}, decMp.Values())
+	})
+
+	t.Run("string struct map", func(t *testing.T) {
+		encMp := ordered.NewMap[string, Vector]()
+		encMp.Put("p1", Vector{1, 2, 3})
+		encMp.Put("p2", Vector{4, 5, 6})
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.NoError(t, err)
+
+		decMp := ordered.NewMap[string, Vector]()
+		err = gob.NewDecoder(&buf).Decode(decMp)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"p1", "p2"}, decMp.Keys())
+		assert.Equal(t, []Vector{{1, 2, 3}, {4, 5, 6}}, decMp.Values())
+	})
+
+	t.Run("map in struct", func(t *testing.T) {
+		type kv = ordered.KeyValue[string, int]
+		type st struct {
+			Name string
+			Val  int
+			Mp   *ordered.Map[string, int]
+		}
+		encSt := st{
+			Name: "foo",
+			Val:  1,
+			Mp:   ordered.NewMapWithKVs[string, int](kv{"abc", 1}, kv{"def", 2}),
+		}
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encSt)
+		assert.NoError(t, err)
+
+		decSt := &st{}
+		err = gob.NewDecoder(&buf).Decode(decSt)
+		assert.NoError(t, err)
+		assert.Equal(t, []kv{{"abc", 1}, {"def", 2}}, decSt.Mp.KeyValues())
+	})
+
+	t.Run("key encoding error", func(t *testing.T) {
+		encMp := ordered.NewMap[point, string]()
+		encMp.Put(point{1, 2}, "p1")
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.Error(t, err)
+	})
+
+	t.Run("value encoding error", func(t *testing.T) {
+		encMp := ordered.NewMap[string, point]()
+		encMp.Put("p1", point{1, 2})
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid decoding error", func(t *testing.T) {
+		var buf bytes.Buffer
+		decMp := ordered.NewMap[string, Vector]()
+
+		err := gob.NewDecoder(&buf).Decode(decMp)
 		assert.Error(t, err)
 	})
 }

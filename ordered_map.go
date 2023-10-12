@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"container/list"
 	"encoding"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -248,4 +249,45 @@ func (o *Map[K, V]) UnmarshalJSON(b []byte) error {
 		o.Put(k, v)
 		return nil
 	})
+}
+
+// GobEncode implements gob.GobEncoder interface.
+func (o Map[K, V]) GobEncode() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	enc.Encode(o.Len())
+	for _, kv := range o.KeyValues() {
+		if err := enc.Encode(kv.Key); err != nil {
+			return nil, err
+		}
+		if err := enc.Encode(kv.Value); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+// GobDecode implements gob.GobDecoder interface.
+func (o *Map[K, V]) GobDecode(b []byte) error {
+	if o.items == nil || o.mp == nil {
+		o.mp = make(map[K]*valuePair[V])
+		o.items = list.New()
+	}
+	dec := gob.NewDecoder(bytes.NewBuffer(b))
+	len := 0
+	if err := dec.Decode(&len); err != nil {
+		return err
+	}
+	for i := 0; i < len; i++ {
+		var k K
+		var v V
+		if err := dec.Decode(&k); err != nil {
+			return err
+		}
+		if err := dec.Decode(&v); err != nil {
+			return err
+		}
+		o.Put(k, v)
+	}
+	return nil
 }

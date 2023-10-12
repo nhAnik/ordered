@@ -2,6 +2,7 @@ package ordered
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -144,6 +145,30 @@ func (s *Set[T]) UnmarshalJSON(b []byte) error {
 	}
 	if unmarshalErrExists {
 		return errors.New("unmarshalling error")
+	}
+	return nil
+}
+
+// GobEncode implements gob.GobEncoder interface.
+func (s Set[T]) GobEncode() ([]byte, error) {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(s.Elements()); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// GobDecode implements gob.GobDecoder interface.
+func (s *Set[T]) GobDecode(b []byte) error {
+	if s.mp == nil {
+		s.mp = NewMap[T, struct{}]()
+	}
+	var elems []T
+	if err := gob.NewDecoder(bytes.NewBuffer(b)).Decode(&elems); err != nil {
+		return err
+	}
+	for _, e := range elems {
+		s.Add(e)
 	}
 	return nil
 }

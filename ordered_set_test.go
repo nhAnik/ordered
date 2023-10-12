@@ -1,6 +1,8 @@
 package ordered_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"testing"
 
@@ -281,6 +283,90 @@ func TestSetUnmarshalJSON(t *testing.T) {
 		data := []byte(`["1-2","3-4"]`)
 
 		err := s.UnmarshalJSON(data)
+		assert.Error(t, err)
+	})
+}
+
+func TestSetGobEncodeDecode(t *testing.T) {
+	t.Run("set of strings", func(t *testing.T) {
+		es := ordered.NewSetWithElems[string]("abc", "def", "abc", "xyz")
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(es)
+		assert.NoError(t, err)
+
+		ds := ordered.NewSet[string]()
+		err = gob.NewDecoder(&buf).Decode(ds)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"abc", "def", "xyz"}, ds.Elements())
+	})
+
+	t.Run("set of struct", func(t *testing.T) {
+		es := ordered.NewSetWithElems[Vector](Vector{1, 2, 3}, Vector{4, 5, 6})
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(es)
+		assert.NoError(t, err)
+
+		ds := ordered.NewSet[Vector]()
+		err = gob.NewDecoder(&buf).Decode(ds)
+		assert.NoError(t, err)
+		assert.Equal(t, []Vector{{1, 2, 3}, {4, 5, 6}}, ds.Elements())
+	})
+
+	t.Run("set inside struct", func(t *testing.T) {
+		type st struct {
+			Name string
+			Val  int
+			Set  *ordered.Set[int]
+		}
+		encSt := st{
+			Name: "foo",
+			Val:  1,
+			Set:  ordered.NewSetWithElems[int](1, 2, 3, 2, 4),
+		}
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encSt)
+		assert.NoError(t, err)
+
+		decSt := &st{}
+		err = gob.NewDecoder(&buf).Decode(decSt)
+		assert.NoError(t, err)
+		assert.Equal(t, []int{1, 2, 3, 4}, decSt.Set.Elements())
+	})
+
+	t.Run("map of ordered set", func(t *testing.T) {
+		encMp := ordered.NewMap[string, *ordered.Set[int]]()
+		encMp.Put("odd", ordered.NewSetWithElems[int](1, 3, 5))
+		encMp.Put("even", ordered.NewSetWithElems[int](2, 4, 6))
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.NoError(t, err)
+
+		decMp := ordered.NewMap[string, *ordered.Set[int]]()
+		err = gob.NewDecoder(&buf).Decode(decMp)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"odd", "even"}, decMp.Keys())
+
+		vals := decMp.Values()
+		assert.Equal(t, []int{1, 3, 5}, vals[0].Elements())
+		assert.Equal(t, []int{2, 4, 6}, vals[1].Elements())
+	})
+
+	t.Run("element encoding error", func(t *testing.T) {
+		s := ordered.NewSetWithElems[point](point{1, 2}, point{4, 5})
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(s)
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid decoding error", func(t *testing.T) {
+		var buf bytes.Buffer
+		decMp := ordered.NewSet[string]()
+
+		err := gob.NewDecoder(&buf).Decode(decMp)
 		assert.Error(t, err)
 	})
 }
