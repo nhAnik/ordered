@@ -78,6 +78,13 @@ func (s *Set[T]) Elements() []T {
 	return s.mp.Keys()
 }
 
+// ForEach invokes the given function f for each element of the set.
+func (o *Set[T]) ForEach(f func(T)) {
+	for _, e := range o.Elements() {
+		f(e)
+	}
+}
+
 // IsEmpty checks whether the set is empty or not.
 func (s *Set[T]) IsEmpty() bool {
 	return s.mp.IsEmpty()

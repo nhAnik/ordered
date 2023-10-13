@@ -294,6 +294,23 @@ func TestKeyValues(t *testing.T) {
 	assert.Equal(t, []kv{}, om.KeyValues())
 }
 
+func TestForEach(t *testing.T) {
+	om := ordered.NewMap[string, int]()
+	om.Put("foo", 10)
+	om.Put("bar", 20)
+	om.Put("foo", 30)
+
+	var keys []string
+	var vals []int
+	om.ForEach(func(k string, v int) {
+		keys = append(keys, k)
+		vals = append(vals, v)
+	})
+
+	assert.Equal(t, []string{"foo", "bar"}, keys)
+	assert.Equal(t, []int{30, 20}, vals)
+}
+
 func TestIsEmpty(t *testing.T) {
 	om := ordered.NewMap[string, any]()
 

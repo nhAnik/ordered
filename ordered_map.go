@@ -155,6 +155,13 @@ func (o *Map[K, V]) KeyValues() []KeyValue[K, V] {
 	return kvs
 }
 
+// ForEach invokes the given function f for each element of the map.
+func (o *Map[K, V]) ForEach(f func(K, V)) {
+	for _, kv := range o.KeyValues() {
+		f(kv.Key, kv.Value)
+	}
+}
+
 // IsEmpty checks whether the map is empty or not.
 func (o *Map[K, V]) IsEmpty() bool {
 	return len(o.mp) == 0

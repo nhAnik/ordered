@@ -86,6 +86,17 @@ func TestSetElements(t *testing.T) {
 	assert.Equal(t, []string{"bar", "baz", "xyz"}, s.Elements())
 }
 
+func TestSetForEach(t *testing.T) {
+	s := ordered.NewSetWithElems[string]("foo", "bar", "foo", "baz")
+
+	var elems []string
+	s.ForEach(func(e string) {
+		elems = append(elems, e)
+	})
+
+	assert.Equal(t, []string{"foo", "bar", "baz"}, elems)
+}
+
 func TestSetIsEmpty(t *testing.T) {
 	s := ordered.NewSet[int]()
 
