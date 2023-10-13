@@ -7,7 +7,8 @@ according to their insertion order.
 **Features:**
 - Amortized `O(1)` time complexity for insertion, remove and get
 - Supports generics
-- Supports JSON marshalling and unmarshalling
+- JSON marshalling and unmarshalling
+- Gob encoding and decoding
 
 **Limitations:**
 - Not safe for concurrent use
@@ -82,6 +83,11 @@ func main() {
 	// Marshals the map to json according to order
 	b, _ := json.Marshal(om)
 	fmt.Println(string(b)) // {"p2":{"X":2,"Y":4},"p3":{"X":3,"Y":6}}
+
+	// Serialize using gob maintaining order
+	f, _ := os.Create("foo")
+	defer f.Close()
+	gob.NewEncoder(f).Encode(om)
 }
 ```
 
@@ -139,6 +145,11 @@ func main() {
 
 	b, _ := json.Marshal(mp)
 	fmt.Println(string(b)) // {"language":["C++","Go","Python"],"editor":["VSCode","Vim"]}
+
+	// Serialize using gob maintaining order
+	f, _ := os.Create("foo")
+	defer f.Close()
+	gob.NewEncoder(f).Encode(s)
 }
 ```
 ### Documentation
