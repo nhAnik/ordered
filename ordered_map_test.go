@@ -607,4 +607,31 @@ func TestGobEncodeDecode(t *testing.T) {
 		err := gob.NewDecoder(&buf).Decode(decMp)
 		assert.Error(t, err)
 	})
+
+	t.Run("invalid key decoding error", func(t *testing.T) {
+		encMp := ordered.NewMap[string, int]()
+		encMp.Put("a", 1)
+		encMp.Put("b", 2)
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.NoError(t, err)
+
+		decMp := ordered.NewMap[int, int]()
+		err = gob.NewDecoder(&buf).Decode(decMp)
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid value decoding error", func(t *testing.T) {
+		encMp := ordered.NewMap[string, int]()
+		encMp.Put("a", 1)
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(encMp)
+		assert.NoError(t, err)
+
+		decMp := ordered.NewMap[string, string]()
+		err = gob.NewDecoder(&buf).Decode(decMp)
+		assert.Error(t, err)
+	})
 }

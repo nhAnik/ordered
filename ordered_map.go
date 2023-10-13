@@ -275,9 +275,7 @@ func (o *Map[K, V]) GobDecode(b []byte) error {
 	}
 	dec := gob.NewDecoder(bytes.NewBuffer(b))
 	len := 0
-	if err := dec.Decode(&len); err != nil {
-		return err
-	}
+	dec.Decode(&len)
 	for i := 0; i < len; i++ {
 		var k K
 		var v V

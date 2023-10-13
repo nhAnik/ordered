@@ -369,4 +369,16 @@ func TestSetGobEncodeDecode(t *testing.T) {
 		err := gob.NewDecoder(&buf).Decode(decMp)
 		assert.Error(t, err)
 	})
+
+	t.Run("invalid element decoding error", func(t *testing.T) {
+		es := ordered.NewSetWithElems[string]("abc", "def", "abc", "xyz")
+
+		var buf bytes.Buffer
+		err := gob.NewEncoder(&buf).Encode(es)
+		assert.NoError(t, err)
+
+		ds := ordered.NewSet[int]()
+		err = gob.NewDecoder(&buf).Decode(ds)
+		assert.Error(t, err)
+	})
 }
