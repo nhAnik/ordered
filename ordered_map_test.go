@@ -393,6 +393,28 @@ func TestMarshalJSON(t *testing.T) {
 		assert.Equal(t, `{"1-2-3":"p1","4-5-6":"p2"}`, string(bytes))
 	})
 
+	t.Run("int int map", func(t *testing.T) {
+		om := ordered.NewMap[int, int]()
+		om.Put(1, 10)
+		om.Put(2, 20)
+		om.Put(-3, -30)
+
+		bytes, err := om.MarshalJSON()
+		assert.NoError(t, err)
+		assert.Equal(t, `{"1":10,"2":20,"-3":-30}`, string(bytes))
+	})
+
+	t.Run("uint uint map", func(t *testing.T) {
+		om := ordered.NewMap[uint8, uint64]()
+		om.Put(10, 100000)
+		om.Put(20, 1234567)
+		om.Put(0, 1)
+
+		bytes, err := om.MarshalJSON()
+		assert.NoError(t, err)
+		assert.Equal(t, `{"10":100000,"20":1234567,"0":1}`, string(bytes))
+	})
+
 	t.Run("struct string map with no text marshaler", func(t *testing.T) {
 		type dummy struct{ Elem string }
 		om := ordered.NewMap[dummy, string]()
@@ -490,6 +512,14 @@ func TestUnmarshalJSON(t *testing.T) {
 	t.Run("unmarshal json with invalid key", func(t *testing.T) {
 		om := ordered.NewMap[point, string]()
 		data := []byte(`{"1-2":"p1","3-4":"p2"}`)
+
+		err := om.UnmarshalJSON(data)
+		assert.Error(t, err)
+	})
+
+	t.Run("unmarshal json with invalid int key", func(t *testing.T) {
+		om := ordered.NewMap[int, string]()
+		data := []byte(`{1:"p1",2:"p2"}`)
 
 		err := om.UnmarshalJSON(data)
 		assert.Error(t, err)

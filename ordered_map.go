@@ -205,12 +205,22 @@ func (o Map[K, V]) MarshalJSON() ([]byte, error) {
 		}
 		// key type must either be a string, an integer type, or implement encoding.TextMarshaler
 		switch any(kv.Key).(type) {
-		case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, encoding.TextMarshaler:
+		case string, encoding.TextMarshaler:
 			keyBytes, err := json.Marshal(kv.Key)
 			if err != nil {
 				return nil, err
 			}
 			buf.Write(keyBytes)
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			var keyBytes bytes.Buffer
+			b, err := json.Marshal(kv.Key)
+			if err != nil {
+				return nil, err
+			}
+			keyBytes.WriteByte('"')
+			keyBytes.Write(b)
+			keyBytes.WriteByte('"')
+			buf.Write(keyBytes.Bytes())
 		default:
 			return nil, errors.New("invalid key type")
 		}
