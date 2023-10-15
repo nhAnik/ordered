@@ -513,7 +513,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	t.Run("key unmarshalling error", func(t *testing.T) {
 		// UnmarshalText for errKey always returns error
 		om := ordered.NewMap[errKey, string]()
-		data := []byte(`{"abc":"abc"`)
+		data := []byte(`{"abc":"abc"}`)
 
 		err := om.UnmarshalJSON(data)
 		assert.Error(t, err)
@@ -522,7 +522,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	t.Run("value unmarshalling error", func(t *testing.T) {
 		// complex type is not supported for json unmarshalling
 		om := ordered.NewMap[string, complex128]()
-		data := []byte(`{"abc":"2+3i"`)
+		data := []byte(`{"abc":"2+3i"}`)
 
 		err := om.UnmarshalJSON(data)
 		assert.Error(t, err)
