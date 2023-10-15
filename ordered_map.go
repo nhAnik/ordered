@@ -134,8 +134,10 @@ func (o *Map[K, V]) Values() []V {
 	idx := 0
 	for e := o.items.Front(); e != nil; e = e.Next() {
 		key := e.Value.(K)
-		values[idx] = o.mp[key].value
-		idx++
+		if vp, ok := o.mp[key]; ok {
+			values[idx] = vp.value
+			idx++
+		}
 	}
 	return values
 }
@@ -148,9 +150,10 @@ func (o *Map[K, V]) KeyValues() []KeyValue[K, V] {
 	idx := 0
 	for e := o.items.Front(); e != nil; e = e.Next() {
 		key := e.Value.(K)
-		value := o.mp[key].value
-		kvs[idx] = KeyValue[K, V]{Key: key, Value: value}
-		idx++
+		if vp, ok := o.mp[key]; ok {
+			kvs[idx] = KeyValue[K, V]{Key: key, Value: vp.value}
+			idx++
+		}
 	}
 	return kvs
 }
