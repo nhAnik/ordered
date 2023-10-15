@@ -213,10 +213,7 @@ func (o Map[K, V]) MarshalJSON() ([]byte, error) {
 			buf.Write(keyBytes)
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 			var keyBytes bytes.Buffer
-			b, err := json.Marshal(kv.Key)
-			if err != nil {
-				return nil, err
-			}
+			b, _ := json.Marshal(kv.Key) // marshalling int/uint does not generate error
 			keyBytes.WriteByte('"')
 			keyBytes.Write(b)
 			keyBytes.WriteByte('"')
